@@ -1,6 +1,53 @@
 {
-  "dependencies": {
-    "express": "^5.2.1",
-    "mongoose": "^9.1.5"
-  }
+    "name": "study-balance-backend",
+    "version": "1.0.0",
+    "description": "Study Balance backend with Express and MongoDB",
+    "main": "src/server.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "nodemon src/server.js",
+        "lint": "eslint src/**/*.js",
+        "lint:fix": "eslint src/**/*.js --fix",
+        "format": "prettier --write \"src/**/*.js\"",
+        "format:check": "prettier --check \"src/**/*.js\"",
+        "preCommit": "npm run lint:fix && npm run format:check"
+    },
+    "keywords": [
+        "express",
+        "mongodb",
+        "functional",
+        "nodejs"
+    ],
+    "author": "",
+    "license": "ISC",
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    },
+    "dependencies": {
+        "compression": "^1.8.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.2.1",
+        "helmet": "^8.1.0",
+        "mongoose": "^9.1.5",
+        "morgan": "^1.10.1"
+    },
+    "devDependencies": {
+        "@eslint/compat": "^2.0.2",
+        "@eslint/eslintrc": "^3.3.3",
+        "@eslint/js": "^9.39.2",
+        "eslint": "^9.39.2",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-functional": "^9.0.2",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-prettier": "^5.5.5",
+        "eslint-plugin-promise": "^7.2.1",
+        "eslint-plugin-security": "^3.0.1",
+        "globals": "^17.3.0",
+        "nodemon": "^3.1.11",
+        "prettier": "^3.8.1"
+    }
 }
