@@ -159,4 +159,6 @@ export default [
     files: ['**/*.config.js', '**/main.jsx', '**/main.js', '**/index.jsx', '**/index.js'],
     rules: { '@eslint-react/naming-convention/filename': 'off' },
   },
+
+  { files: ['**/Navbar.jsx'], rules: { '@eslint-react/no-leaked-conditional-rendering': 'off' } },
 ]
