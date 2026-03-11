@@ -7,29 +7,22 @@ const isMongoDuplicateKeyError = (err) =>
 
 const makeAuthService = ({ userModel, hashPassword, signJwt, config }) => {
   const validateRegisterInput = ({ email, password }) => {
-    const normalizedEmail = normalizeEmail(email);
-
-    const errors = [
-      !isValidEmail(normalizedEmail) ? { field: 'email', message: 'Invalid email format' } : null,
-      !isStrongPassword(password)
-        ? {
-            field: 'password',
-            message: 'Password must be >= 8 chars and include uppercase, lowercase, and number',
-          }
-        : null,
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
+    const result = registerSchema.safeParse({ email, password });
+    
+    if (!result.success) {
+      const errors = result.error.errors.map(err => ({
+        field: err.path[0],
+        message: err.message,
+      }));
       throw badRequest('Validation failed', { errors });
     }
-
-    return { email: normalizedEmail, password };
+    
+    return { 
+      email: result.data.email.toLowerCase().trim(), 
+      password: result.data.password 
+    };
   };
-
-  const ensureEmailUnique = async ({ email }) => {
-    const existing = await userModel.findOne({ email }).lean();
-    if (existing) throw conflict('Email already exists');
-    return { email };
+    return { email: normalizedEmail, password };
   };
 
   const createUser = async ({ email, password }) => {
@@ -39,10 +32,14 @@ const makeAuthService = ({ userModel, hashPassword, signJwt, config }) => {
     });
 
     try {
-      const doc = await userModel.create({ email, passwordHash });
-      return doc;
+      return await userModel.create({ email, passwordHash });
     } catch (err) {
-      if (isMongoDuplicateKeyError(err)) throw conflict('Email already exists');
+      if (isMongoDuplicateKeyError(err)) {
+        throw conflict('Email already exists');
+      }
+
+      console.error('User creation failed:', err);
+
       throw internal('Failed to create user');
     }
   };
@@ -56,14 +53,13 @@ const makeAuthService = ({ userModel, hashPassword, signJwt, config }) => {
 
   const register = async ({ email, password }) => {
     const input = validateRegisterInput({ email, password });
-    await ensureEmailUnique({ email: input.email });
 
     const user = await createUser(input);
     const token = issueToken({ user });
 
     return {
       token,
-      user: userDto(user.toObject ? user.toObject() : user),
+      user: userDto(user.toObject()),
     };
   };
 

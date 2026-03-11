@@ -1,12 +1,16 @@
 const { badRequest } = require('../utils/httpErrors');
-
-const requireBodyFields = (fields) => (req, _res, next) => {
-  const body = req.body || {};
-  const missing = fields.filter((f) => body[f] == null);
-
-  return missing.length > 0
-    ? next(badRequest('Missing required fields', { missing }))
-    : next();
+const validateBody = (schema) => (req, _res, next) => {
+  const result = schema.safeParse(req.body);
+  
+  if (!result.success) {
+    const errors = result.error.errors.map(err => ({
+      field: err.path.join('.'),
+      message: err.message,
+    }));
+    return next(badRequest('Validation failed', { errors }));
+  }
+  
+  req.validatedBody = result.data;
+  next();
 };
-
-module.exports = { requireBodyFields };
+module.exports = { validateBody };
