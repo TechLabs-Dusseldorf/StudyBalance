@@ -64,6 +64,6 @@ const makeAuthService = ({ userModel, hashPassword, signJwt, config }) => {
   };
 
   return { register };
-};
+
 
 module.exports = { makeAuthService };
