@@ -8,6 +8,13 @@ const rateLimit = require('express-rate-limit')
 const config = require('./config/config')
 const { connectDB, disconnectDB } = require('./db/db')
 
+const User = require('./model/User')
+const { makeAuthService } = require('./services/authService')
+const { makeAuthController } = require('./controllers/authController')
+const { makeAuthRoutes } = require('./routes/authRoutes')
+const { hashPassword, comparePassword } = require('./utils/crypto')
+const { signJwt } = require('./utils/jwt')
+
 /**
  * Create and configure Express application
  * @returns {express.Application}
@@ -43,40 +50,49 @@ const createApp = () => {
 
   // Health check route
   app.get('/health', (req, res) => {
-    res.status(200).json({ success: true, message: 'Server is healthy', timestamp: new Date().toISOString() })
+    res.status(200).json({
+      success: true,
+      message: 'Server is healthy',
+      timestamp: new Date().toISOString(),
+    })
   })
 
+  const authService = makeAuthService({
+    userModel: User,
+    hashPassword,
+    comparePassword,
+    signJwt,
+    config,
+  })
+
+  const authController = makeAuthController({ authService })
+
   // API routes
-  // app.use(`${config.server.apiPrefix}/${config.server.apiVersion}/users`, require('./routes/userRoutes'));
+  app.use(`${config.server.apiPrefix}/auth`, makeAuthRoutes({ authController }))
 
   // 404 handler
   app.use((req, res) => {
-    res
-      .status(404)
-      .json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'Resource not found', path: req.path },
-        timestamp: new Date().toISOString(),
-      })
+    res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: 'Resource not found', path: req.path },
+      timestamp: new Date().toISOString(),
+    })
   })
 
   // Global error handler
-  app.use((err, req, res, next) => {
+  app.use((err, req, res, _next) => {
     const statusCode = err.statusCode || 500
     const isDev = config.isDevelopment
 
-    res
-      .status(statusCode)
-      .json({
-        success: false,
-        error: {
-          code: err.code || 'INTERNAL_ERROR',
-          message: err.message || 'Internal Server Error',
-          ...(isDev && { stack: err.stack }),
-        },
-        timestamp: new Date().toISOString(),
-      })
-    next(err)
+    res.status(statusCode).json({
+      success: false,
+      error: {
+        code: err.code || 'INTERNAL_ERROR',
+        message: err.message || 'Internal Server Error',
+        ...(isDev && { stack: err.stack }),
+      },
+      timestamp: new Date().toISOString(),
+    })
   })
 
   return app
@@ -88,20 +104,16 @@ const createApp = () => {
  */
 const startServer = async () => {
   try {
-    // Connect to database
     await connectDB()
 
-    // Create app
     const app = createApp()
 
-    // Start listening
     const server = app.listen(config.server.port, () => {
       console.log(`🚀 Server running in ${config.env} mode`)
       console.log(`📡 Listening on port ${config.server.port}`)
       console.log(`🔗 API: http://localhost:${config.server.port}${config.server.apiPrefix}`)
     })
 
-    // Graceful shutdown
     const gracefulShutdown = async (signal) => {
       console.log(`\n${signal} received. Starting graceful shutdown...`)
 
@@ -115,7 +127,6 @@ const startServer = async () => {
         throw new Error('Graceful shutdown completed')
       })
 
-      // Force shutdown after 10 seconds
       setTimeout(() => {
         console.error('⚠️  Forcefully shutting down')
         throw new Error('Forcefully shutting down')
@@ -130,7 +141,6 @@ const startServer = async () => {
   }
 }
 
-// Start server if run directly
 if (require.main === module) {
   startServer()
 }
