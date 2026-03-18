@@ -4,11 +4,10 @@ const successResponse = ({ token, user }) => ({
   user,
 })
 
-const userDto = ({ _id, email, createdAt, lastLogin }) => ({
+const userDto = ({ _id, email, lastLogin }) => ({ 
   id: String(_id),
   email,
-  createdAt,
-  lastLogin,
+  lastLogin,                                        
 })
 
 module.exports = {
