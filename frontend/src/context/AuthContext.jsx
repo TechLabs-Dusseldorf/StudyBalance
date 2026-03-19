@@ -18,6 +18,9 @@ import {
   getGuestTasks,
   getStoredUser,
   getUserMode,
+  setGuestGoals,
+  setGuestSessions,
+  setGuestTasks,
   setUserMode,
   storeAuthSession,
 } from '../utils/localStorage'
@@ -89,14 +92,35 @@ export function AuthProvider({ children }) {
     const guestTasks = getGuestTasks()
     const guestGoals = getGuestGoals()
     const guestSessions = getGuestSessions()
+    const operations = [
+      ...guestTasks.map((task) => ({ type: 'task', item: task, request: () => createTask(task) })),
+      ...guestGoals.map((goal) => ({ type: 'goal', item: goal, request: () => createGoal(goal) })),
+      ...guestSessions.map((session) => ({ type: 'session', item: session, request: () => createSession(session) })),
+    ]
 
-    await Promise.allSettled([
-      ...guestTasks.map((task) => createTask(task)),
-      ...guestGoals.map((goal) => createGoal(goal)),
-      ...guestSessions.map((session) => createSession(session)),
-    ])
+    if (operations.length === 0) {
+      clearGuestData()
+      return
+    }
 
-    clearGuestData()
+    const results = await Promise.allSettled(operations.map((operation) => operation.request()))
+    const failedOperations = results.flatMap((result, index) =>
+      result.status === 'rejected' ? [{ ...operations[index], reason: result.reason }] : []
+    )
+
+    if (failedOperations.length === 0) {
+      clearGuestData()
+      return
+    }
+
+    setGuestTasks(failedOperations.filter((operation) => operation.type === 'task').map((operation) => operation.item))
+    setGuestGoals(failedOperations.filter((operation) => operation.type === 'goal').map((operation) => operation.item))
+    setGuestSessions(
+      failedOperations.filter((operation) => operation.type === 'session').map((operation) => operation.item)
+    )
+
+    console.warn('Failed to migrate some guest data.', failedOperations)
+    window.alert('Some guest data could not be migrated. It will stay on this device so you can try again later.')
   }, [])
 
   useEffect(() => {

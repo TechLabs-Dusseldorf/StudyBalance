@@ -9,6 +9,8 @@ import { useStats } from './StatsContext'
 const TimerContext = createContext(null)
 
 const SESSION_LENGTHS = { focus: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 }
+const FOCUS_SESSION_MINUTES = SESSION_LENGTHS.focus / 60
+const getElapsedFocusMinutes = (timeRemaining) => Math.max(0, FOCUS_SESSION_MINUTES - timeRemaining / 60)
 
 export function TimerProvider({ children }) {
   const { isGuest } = useAuth()
@@ -20,28 +22,43 @@ export function TimerProvider({ children }) {
   const [sessionCount, setSessionCount] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const persistSession = useCallback(
+    async (duration) => {
+      if (duration <= 0) {
+        return
+      }
+
+      const sessionData = { id: createClientId(), duration, type: 'focus', completedAt: new Date().toISOString() }
+
+      if (isGuest) {
+        const sessions = [sessionData, ...getGuestSessions()]
+        setGuestSessions(sessions)
+      } else {
+        await createSession(sessionData)
+      }
+
+      await refreshStats()
+      await fetchGoals()
+    },
+    [fetchGoals, isGuest, refreshStats]
+  )
+
   const resetTimer = useCallback(
     (nextType = sessionType) => {
+      if (sessionType === 'focus' && nextType === 'focus') {
+        const elapsedDuration = getElapsedFocusMinutes(timeRemaining)
+
+        if (elapsedDuration > 0) {
+          void persistSession(elapsedDuration)
+        }
+      }
+
       setIsRunning(false)
       setSessionType(nextType)
       setTimeRemaining(SESSION_LENGTHS[nextType])
     },
-    [sessionType]
+    [persistSession, sessionType, timeRemaining]
   )
-
-  const persistSession = useCallback(async () => {
-    const sessionData = { id: createClientId(), duration: 25, type: 'focus', completedAt: new Date().toISOString() }
-
-    if (isGuest) {
-      const sessions = [sessionData, ...getGuestSessions()]
-      setGuestSessions(sessions)
-    } else {
-      await createSession(sessionData)
-    }
-
-    await refreshStats()
-    await fetchGoals()
-  }, [fetchGoals, isGuest, refreshStats])
 
   useEffect(() => {
     if (!isRunning) {
@@ -61,7 +78,7 @@ export function TimerProvider({ children }) {
           const nextType = nextCount % 4 === 0 ? 'longBreak' : 'shortBreak'
           setSessionCount(nextCount)
           setSessionType(nextType)
-          void persistSession()
+          void persistSession(FOCUS_SESSION_MINUTES)
           return SESSION_LENGTHS[nextType]
         }
 

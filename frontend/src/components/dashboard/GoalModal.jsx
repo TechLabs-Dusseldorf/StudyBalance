@@ -21,10 +21,12 @@ const getInitialState = (goal) => ({
 function GoalModal({ open, goal, onClose, onSave, onDelete }) {
   const [form, setForm] = useState(getInitialState(goal))
   const [error, setError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     setForm(getInitialState(goal))
     setError('')
+    setIsSaving(false)
   }, [goal])
 
   const handleChange = (event) => {
@@ -38,13 +40,22 @@ function GoalModal({ open, goal, onClose, onSave, onDelete }) {
       return
     }
 
-    await onSave({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      targetDate: form.targetDate ? new Date(form.targetDate).toISOString() : null,
-      targetHours: form.targetHours ? Number(form.targetHours) : 0,
-      category: form.category.trim(),
-    })
+    setError('')
+    setIsSaving(true)
+
+    try {
+      await onSave({
+        title: form.title.trim(),
+        description: form.description.trim(),
+        targetDate: form.targetDate ? new Date(form.targetDate).toISOString() : null,
+        targetHours: form.targetHours ? Number(form.targetHours) : 0,
+        category: form.category.trim(),
+      })
+    } catch (saveError) {
+      setError(saveError.response?.data?.message ?? saveError.message ?? 'Unable to save goal.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -82,13 +93,15 @@ function GoalModal({ open, goal, onClose, onSave, onDelete }) {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-        <Button color="error" onClick={() => onDelete(goal)} disabled={!goal}>
+        <Button color="error" onClick={() => onDelete(goal)} disabled={!goal || isSaving}>
           Delete
         </Button>
         <Stack direction="row" spacing={1}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained" sx={{ backgroundColor: '#0d6e8a' }}>
-            Save
+          <Button onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} variant="contained" sx={{ backgroundColor: '#0d6e8a' }} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </Stack>
       </DialogActions>

@@ -23,10 +23,12 @@ const createInitialState = (task) => ({
 function TaskModal({ open, task, onClose, onSave }) {
   const [form, setForm] = useState(createInitialState(task))
   const [error, setError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     setForm(createInitialState(task))
     setError('')
+    setIsSaving(false)
   }, [task])
 
   const isEditMode = useMemo(() => Boolean(task), [task])
@@ -43,17 +45,25 @@ function TaskModal({ open, task, onClose, onSave }) {
     }
 
     setError('')
-    await onSave({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      tags: form.tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      priority: form.priority,
-      dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : null,
-      estimatedTime: form.estimatedTime ? Number(form.estimatedTime) : 0,
-    })
+    setIsSaving(true)
+
+    try {
+      await onSave({
+        title: form.title.trim(),
+        description: form.description.trim(),
+        tags: form.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        priority: form.priority,
+        dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : null,
+        estimatedTime: form.estimatedTime ? Number(form.estimatedTime) : 0,
+      })
+    } catch (saveError) {
+      setError(saveError.response?.data?.message ?? saveError.message ?? 'Unable to save task.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -96,9 +106,11 @@ function TaskModal({ open, task, onClose, onSave }) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" sx={{ backgroundColor: '#0d6e8a' }}>
-          Save
+        <Button onClick={onClose} disabled={isSaving}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} variant="contained" sx={{ backgroundColor: '#0d6e8a' }} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>
