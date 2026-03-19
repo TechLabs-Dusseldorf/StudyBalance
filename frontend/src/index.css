@@ -4,6 +4,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #12324a;
+  background-color: #f4f7fb;
 }
 
 * {
@@ -21,6 +23,16 @@ body {
   min-width: 320px;
   background:
     radial-gradient(circle at 10% 10%, #dff4ff 0, transparent 28%),
-    radial-gradient(circle at 85% 15%, #e6fef3 0, transparent 24%),
-    #f4f7fb;
+    radial-gradient(circle at 85% 15%, #e6fef3 0, transparent 24%), #f4f7fb;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
