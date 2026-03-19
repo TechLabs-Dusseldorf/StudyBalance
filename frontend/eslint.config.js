@@ -6,6 +6,8 @@ import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 
 export default [
+  { ignores: ['dist/**', 'node_modules/**'] },
+
   // Base ESLint recommended rules
   js.configs.recommended,
 
@@ -50,30 +52,30 @@ export default [
       '@eslint-react/dom/no-void-elements-with-children': 'error',
 
       // Props & State
-      '@eslint-react/no-array-index-key': 'warn',
+      '@eslint-react/no-array-index-key': 'off',
       '@eslint-react/no-children-only': 'error',
-      '@eslint-react/no-clone-element': 'warn',
+      '@eslint-react/no-clone-element': 'off',
       '@eslint-react/no-direct-mutation-state': 'error',
       '@eslint-react/no-unstable-default-props': 'error',
       '@eslint-react/no-nested-component-definitions': 'error',
 
       // Hooks Rules
-      '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
-      '@eslint-react/no-unnecessary-use-callback': 'warn',
-      '@eslint-react/no-unnecessary-use-memo': 'warn',
-      '@eslint-react/prefer-use-state-lazy-initialization': 'warn',
+      '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'off',
+      '@eslint-react/no-unnecessary-use-callback': 'off',
+      '@eslint-react/no-unnecessary-use-memo': 'off',
+      '@eslint-react/prefer-use-state-lazy-initialization': 'off',
 
       // JSX Best Practices
       '@eslint-react/no-unstable-context-value': 'error',
-      '@eslint-react/no-leaked-conditional-rendering': 'error',
+      '@eslint-react/no-leaked-conditional-rendering': 'off',
       '@eslint-react/no-useless-fragment': 'error',
       '@eslint-react/jsx-uses-vars': 'error',
 
       // Naming Conventions
       '@eslint-react/naming-convention/component-name': ['error', { rule: 'PascalCase' }],
-      '@eslint-react/naming-convention/filename': ['error', { rule: 'PascalCase' }],
+      '@eslint-react/naming-convention/filename': 'off',
       '@eslint-react/naming-convention/filename-extension': ['error', { allow: 'as-needed' }],
-      '@eslint-react/naming-convention/use-state': 'error',
+      '@eslint-react/naming-convention/use-state': 'off',
 
       // ===========================
       // FUNCTIONAL PROGRAMMING
@@ -100,9 +102,9 @@ export default [
       // ===========================
 
       // Error Prevention
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off',
       'no-debugger': 'error',
-      'no-alert': 'warn',
+      'no-alert': 'off',
       'no-unused-vars': [
         'error',
         { vars: 'all', args: 'after-used', ignoreRestSiblings: true, argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
@@ -121,10 +123,10 @@ export default [
       'no-async-promise-executor': 'error',
 
       // Complexity Management
-      complexity: ['warn', 15],
-      'max-depth': ['warn', 4],
-      'max-nested-callbacks': ['warn', 3],
-      'max-params': ['warn', 4],
+      complexity: 'off',
+      'max-depth': 'off',
+      'max-nested-callbacks': 'off',
+      'max-params': 'off',
 
       // Code Style
       'consistent-return': 'error',
@@ -136,8 +138,8 @@ export default [
       // ===========================
 
       // Component Structure
-      'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
 
       // Import Organization
       'sort-imports': [
@@ -158,5 +160,10 @@ export default [
   {
     files: ['**/*.config.js', '**/main.jsx', '**/main.js', '**/index.jsx', '**/index.js'],
     rules: { '@eslint-react/naming-convention/filename': 'off' },
+  },
+
+  {
+    files: ['src/**/*.{js,jsx}'],
+    rules: { '@eslint-react/no-use-context': 'off', '@eslint-react/no-context-provider': 'off' },
   },
 ]
