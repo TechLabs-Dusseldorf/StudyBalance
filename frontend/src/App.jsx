@@ -9,6 +9,7 @@ import { GoalsProvider } from './context/GoalsContext'
 import { StatsProvider } from './context/StatsContext'
 import { TasksProvider } from './context/TasksContext'
 import { TimerProvider } from './context/TimerContext'
+import { ToastProvider } from './context/ToastContext'
 
 function PublicOnlyRoute({ children, allowGuest = false }) {
   const { isAuthenticated, isGuest, isLoading } = useAuth()
@@ -59,17 +60,19 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <StatsProvider>
-        <TasksProvider>
-          <GoalsProvider>
-            <TimerProvider>
-              <AppRoutes />
-            </TimerProvider>
-          </GoalsProvider>
-        </TasksProvider>
-      </StatsProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <StatsProvider>
+          <TasksProvider>
+            <GoalsProvider>
+              <TimerProvider>
+                <AppRoutes />
+              </TimerProvider>
+            </GoalsProvider>
+          </TasksProvider>
+        </StatsProvider>
+      </AuthProvider>
+    </ToastProvider>
   )
 }
 
