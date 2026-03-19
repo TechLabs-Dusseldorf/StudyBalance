@@ -115,7 +115,8 @@ export default defineConfig([
             'functional/no-this-expressions': 'error',
             'functional/no-let': 'warn',
 
-            'functional/immutable-data': ['error', { ignoreAccessorPattern: ['*.current', 'module.exports'] }],
+            // Disable type-aware immutability rule (project doesn't provide TS type info)
+            'functional/immutable-data': 'off',
 
             'functional/prefer-readonly-type': 'off',
             'functional/prefer-immutable-types': 'off',
