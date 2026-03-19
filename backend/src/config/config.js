@@ -14,6 +14,12 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test',
 
+  // Crypto / Auth
+  bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
+  jwtSecret: process.env.JWT_SECRET || 'dev_jwt_secret_change_me',
+  // Story 4: Logout is client-side; backend should keep tokens short-lived (~7 days).
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+
   // Server
   server: {
     port: parseInt(process.env.PORT, 10) || 5000,
