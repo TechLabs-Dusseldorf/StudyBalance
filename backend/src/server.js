@@ -89,6 +89,7 @@ const createApp = () => {
       error: {
         code: err.code || 'INTERNAL_ERROR',
         message: err.message || 'Internal Server Error',
+        ...(err.details && { details: err.details }),
         ...(isDev && { stack: err.stack }),
       },
       timestamp: new Date().toISOString(),
@@ -123,13 +124,14 @@ const startServer = async () => {
           await disconnectDB()
         } catch (err) {
           console.error('❌ Error disconnecting DB:', err.message)
+          process.exit(1)
         }
-        throw new Error('Graceful shutdown completed')
+        process.exit(0)
       })
 
       setTimeout(() => {
         console.error('⚠️  Forcefully shutting down')
-        throw new Error('Forcefully shutting down')
+        process.exit(1)
       }, 10000)
     }
 
