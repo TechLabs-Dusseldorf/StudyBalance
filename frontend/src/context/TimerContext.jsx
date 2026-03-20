@@ -5,6 +5,7 @@ import { createClientId, getGuestSessions, setGuestSessions } from '../utils/loc
 import { useAuth } from './AuthContext'
 import { useGoals } from './GoalsContext'
 import { useStats } from './StatsContext'
+import { useToast } from './ToastContext'
 
 const TimerContext = createContext(null)
 
@@ -16,6 +17,7 @@ export function TimerProvider({ children }) {
   const { isGuest } = useAuth()
   const { refreshStats } = useStats()
   const { fetchGoals } = useGoals()
+  const { showError, showSuccess } = useToast()
   const [sessionType, setSessionType] = useState('focus')
   const [timeRemaining, setTimeRemaining] = useState(SESSION_LENGTHS.focus)
   const [isRunning, setIsRunning] = useState(false)
@@ -30,17 +32,21 @@ export function TimerProvider({ children }) {
 
       const sessionData = { id: createClientId(), duration, type: 'focus', completedAt: new Date().toISOString() }
 
-      if (isGuest) {
-        const sessions = [sessionData, ...getGuestSessions()]
-        setGuestSessions(sessions)
-      } else {
-        await createSession(sessionData)
-      }
+      try {
+        if (isGuest) {
+          const sessions = [sessionData, ...getGuestSessions()]
+          setGuestSessions(sessions)
+        } else {
+          await createSession(sessionData)
+        }
 
-      await refreshStats()
-      await fetchGoals()
+        await refreshStats()
+        await fetchGoals()
+      } catch (requestError) {
+        showError(requestError.response?.data?.message ?? requestError.message ?? 'Unable to save your focus session.')
+      }
     },
-    [fetchGoals, isGuest, refreshStats]
+    [fetchGoals, isGuest, refreshStats, showError]
   )
 
   const resetTimer = useCallback(
@@ -78,6 +84,7 @@ export function TimerProvider({ children }) {
           const nextType = nextCount % 4 === 0 ? 'longBreak' : 'shortBreak'
           setSessionCount(nextCount)
           setSessionType(nextType)
+          showSuccess('Focus session complete! Time for a break.')
           void persistSession(FOCUS_SESSION_MINUTES)
           return SESSION_LENGTHS[nextType]
         }
@@ -88,7 +95,7 @@ export function TimerProvider({ children }) {
     }, 1000)
 
     return () => window.clearInterval(timerId)
-  }, [isRunning, persistSession, sessionCount, sessionType])
+  }, [isRunning, persistSession, sessionCount, sessionType, showSuccess])
 
   const startTimer = useCallback(() => setIsRunning(true), [])
   const pauseTimer = useCallback(() => setIsRunning(false), [])

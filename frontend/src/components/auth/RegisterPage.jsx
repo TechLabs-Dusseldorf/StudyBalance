@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography'
 import { Link as RouterLink } from 'react-router-dom'
 
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 const getPasswordStrength = (password) => {
   if (password.length < 6) {
@@ -29,6 +30,7 @@ const getPasswordStrength = (password) => {
 
 function RegisterPage() {
   const { register, isGuest } = useAuth()
+  const { showError } = useToast()
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -55,7 +57,9 @@ function RegisterPage() {
     try {
       await register({ email: form.email, password: form.password })
     } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Registration failed. Please try again.')
+      const message = requestError.response?.data?.message ?? 'Registration failed. Please try again.'
+      setError(message)
+      showError(message)
     } finally {
       setIsLoading(false)
     }

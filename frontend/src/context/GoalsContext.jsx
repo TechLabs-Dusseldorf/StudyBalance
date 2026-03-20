@@ -9,6 +9,7 @@ import {
 import { createClientId, getGuestGoals, getGuestSessions, setGuestGoals } from '../utils/localStorage'
 import { useAuth } from './AuthContext'
 import { useStats } from './StatsContext'
+import { useToast } from './ToastContext'
 
 const GoalsContext = createContext(null)
 
@@ -36,6 +37,7 @@ const decorateGoal = (goal, sessions) => {
 export function GoalsProvider({ children }) {
   const { isAuthenticated, isGuest } = useAuth()
   const { refreshStats } = useStats()
+  const { showError, showSuccess } = useToast()
   const [goals, setGoals] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -59,11 +61,13 @@ export function GoalsProvider({ children }) {
 
       setGoals([])
     } catch (fetchError) {
-      setError(fetchError.response?.data?.message ?? fetchError.message ?? 'Unable to load goals.')
+      const message = fetchError.response?.data?.message ?? fetchError.message ?? 'Unable to load goals.'
+      setError(message)
+      showError(message)
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthenticated, isGuest])
+  }, [isAuthenticated, isGuest, showError])
 
   useEffect(() => {
     fetchGoals()
@@ -71,48 +75,72 @@ export function GoalsProvider({ children }) {
 
   const createGoal = useCallback(
     async (goalData) => {
-      if (isGuest) {
-        const newGoal = { id: createClientId(), createdAt: new Date().toISOString(), ...goalData }
-        const nextGoals = [newGoal, ...getGuestGoals()]
-        setGuestGoals(nextGoals)
-      } else {
-        await createGoalRequest(goalData)
-      }
+      try {
+        if (isGuest) {
+          const newGoal = { id: createClientId(), createdAt: new Date().toISOString(), ...goalData }
+          const nextGoals = [newGoal, ...getGuestGoals()]
+          setGuestGoals(nextGoals)
+        } else {
+          await createGoalRequest(goalData)
+        }
 
-      await fetchGoals()
-      await refreshStats()
+        await fetchGoals()
+        await refreshStats()
+        showSuccess('Goal saved.')
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to save goal.'
+        setError(message)
+        showError(message)
+        throw requestError
+      }
     },
-    [fetchGoals, isGuest, refreshStats]
+    [fetchGoals, isGuest, refreshStats, showError, showSuccess]
   )
 
   const updateGoal = useCallback(
     async (id, goalData) => {
-      if (isGuest) {
-        const nextGoals = getGuestGoals().map((goal) => (goal.id === id ? { ...goal, ...goalData } : goal))
-        setGuestGoals(nextGoals)
-      } else {
-        await updateGoalRequest(id, goalData)
-      }
+      try {
+        if (isGuest) {
+          const nextGoals = getGuestGoals().map((goal) => (goal.id === id ? { ...goal, ...goalData } : goal))
+          setGuestGoals(nextGoals)
+        } else {
+          await updateGoalRequest(id, goalData)
+        }
 
-      await fetchGoals()
-      await refreshStats()
+        await fetchGoals()
+        await refreshStats()
+        showSuccess('Goal updated.')
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to update goal.'
+        setError(message)
+        showError(message)
+        throw requestError
+      }
     },
-    [fetchGoals, isGuest, refreshStats]
+    [fetchGoals, isGuest, refreshStats, showError, showSuccess]
   )
 
   const deleteGoal = useCallback(
     async (id) => {
-      if (isGuest) {
-        const nextGoals = getGuestGoals().filter((goal) => goal.id !== id)
-        setGuestGoals(nextGoals)
-      } else {
-        await deleteGoalRequest(id)
-      }
+      try {
+        if (isGuest) {
+          const nextGoals = getGuestGoals().filter((goal) => goal.id !== id)
+          setGuestGoals(nextGoals)
+        } else {
+          await deleteGoalRequest(id)
+        }
 
-      await fetchGoals()
-      await refreshStats()
+        await fetchGoals()
+        await refreshStats()
+        showSuccess('Goal deleted.')
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to delete goal.'
+        setError(message)
+        showError(message)
+        throw requestError
+      }
     },
-    [fetchGoals, isGuest, refreshStats]
+    [fetchGoals, isGuest, refreshStats, showError, showSuccess]
   )
 
   const value = useMemo(

@@ -3,6 +3,9 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
+import Dialog from '@mui/material/Dialog'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import LinearProgress from '@mui/material/LinearProgress'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -13,6 +16,7 @@ import GoalModal from './GoalModal'
 function GoalsCard() {
   const { goals, isLoading, createGoal, updateGoal, deleteGoal } = useGoals()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isListOpen, setIsListOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState(null)
 
   const visibleGoals = goals.slice(0, 3)
@@ -101,12 +105,62 @@ function GoalsCard() {
           </Stack>
 
           {goals.length > 3 ? (
-            <Typography variant="body2" color="#0d6e8a">
+            <Typography
+              component="button"
+              type="button"
+              variant="body2"
+              onClick={() => setIsListOpen(true)}
+              sx={{
+                border: 0,
+                background: 'none',
+                p: 0,
+                width: 'fit-content',
+                color: '#0d6e8a',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
               View All ({goals.length})
             </Typography>
           ) : null}
         </Stack>
       </Card>
+
+      <Dialog open={isListOpen} onClose={() => setIsListOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>All Goals</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            {goals.map((goal) => (
+              <Card
+                key={`expanded-${goal.id}`}
+                variant="outlined"
+                sx={{ p: 1.5, borderRadius: 3, cursor: 'pointer' }}
+                onClick={() => {
+                  setIsListOpen(false)
+                  setEditingGoal(goal)
+                  setIsModalOpen(true)
+                }}
+              >
+                <Stack spacing={1}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <FlagRoundedIcon fontSize="small" sx={{ color: '#0d6e8a' }} />
+                    <Typography sx={{ fontWeight: 700, color: '#15364f' }}>{goal.title}</Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={goal.progressPercent ?? 0}
+                    sx={{ height: 8, borderRadius: 999 }}
+                  />
+                  <Typography variant="body2" color="#607487">
+                    {Math.round(goal.progressHours ?? 0)} / {goal.targetHours || 0} hours - {goal.progressPercent ?? 0}%
+                    complete
+                  </Typography>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       <GoalModal
         open={isModalOpen}

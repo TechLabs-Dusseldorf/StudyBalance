@@ -24,6 +24,7 @@ import {
   setUserMode,
   storeAuthSession,
 } from '../utils/localStorage'
+import { useToast } from './ToastContext'
 
 const AuthContext = createContext(null)
 
@@ -68,6 +69,7 @@ const extractAuthPayload = (response) => {
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
+  const { showInfo, showSuccess, showWarning } = useToast()
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [userMode, setUserModeState] = useState(null)
@@ -120,13 +122,16 @@ export function AuthProvider({ children }) {
     )
 
     console.warn('Failed to migrate some guest data.', failedOperations)
-    window.alert('Some guest data could not be migrated. It will stay on this device so you can try again later.')
-  }, [])
+    showWarning('Some guest data could not be migrated. It stays on this device so you can try again later.')
+  }, [showWarning])
 
   useEffect(() => {
-    setUnauthorizedHandler(() => logout())
+    setUnauthorizedHandler(() => {
+      showWarning('Your session expired. Please log in again.')
+      logout()
+    })
     return () => setUnauthorizedHandler(null)
-  }, [logout])
+  }, [logout, showWarning])
 
   useEffect(() => {
     const mode = getUserMode()
@@ -163,10 +168,11 @@ export function AuthProvider({ children }) {
       setToken(payload.token)
       setUser(payload.user)
       setUserModeState('authenticated')
+      showSuccess(`Welcome back, ${payload.user.name}.`)
       navigate('/dashboard', { replace: true })
       return payload.user
     },
-    [navigate]
+    [navigate, showSuccess]
   )
 
   const register = useCallback(
@@ -183,10 +189,11 @@ export function AuthProvider({ children }) {
         await migrateGuestData()
       }
 
+      showSuccess('Account created successfully.')
       navigate('/dashboard', { replace: true })
       return payload.user
     },
-    [migrateGuestData, navigate]
+    [migrateGuestData, navigate, showSuccess]
   )
 
   const loginAsGuest = useCallback(() => {
@@ -195,8 +202,9 @@ export function AuthProvider({ children }) {
     setUser({ name: 'Guest User', email: '' })
     setToken(null)
     setUserModeState('guest')
+    showInfo('You are browsing in guest mode.')
     navigate('/dashboard', { replace: true })
-  }, [navigate])
+  }, [navigate, showInfo])
 
   const value = useMemo(
     () => ({

@@ -14,9 +14,11 @@ import Typography from '@mui/material/Typography'
 import { Link as RouterLink } from 'react-router-dom'
 
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 function LoginPage() {
   const { login, loginAsGuest } = useAuth()
+  const { showError } = useToast()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -34,7 +36,9 @@ function LoginPage() {
     try {
       await login(form)
     } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Invalid credentials. Please try again.')
+      const message = requestError.response?.data?.message ?? 'Invalid credentials. Please try again.'
+      setError(message)
+      showError(message)
     } finally {
       setIsLoading(false)
     }

@@ -9,6 +9,7 @@ import {
 import { createClientId, getGuestTasks, setGuestTasks } from '../utils/localStorage'
 import { useAuth } from './AuthContext'
 import { useStats } from './StatsContext'
+import { useToast } from './ToastContext'
 
 const TasksContext = createContext(null)
 
@@ -36,6 +37,7 @@ const matchesSearch = (task, query) => {
 export function TasksProvider({ children }) {
   const { isAuthenticated, isGuest } = useAuth()
   const { refreshStats } = useStats()
+  const { showError, showSuccess } = useToast()
   const [tasks, setTasks] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
@@ -64,11 +66,13 @@ export function TasksProvider({ children }) {
 
       setTasks([])
     } catch (fetchError) {
-      setError(fetchError.response?.data?.message ?? fetchError.message ?? 'Unable to load tasks.')
+      const message = fetchError.response?.data?.message ?? fetchError.message ?? 'Unable to load tasks.'
+      setError(message)
+      showError(message)
     } finally {
       setIsLoading(false)
     }
-  }, [isAuthenticated, isGuest, searchQuery, selectedTags])
+  }, [isAuthenticated, isGuest, searchQuery, selectedTags, showError])
 
   useEffect(() => {
     fetchTasks()
@@ -77,64 +81,95 @@ export function TasksProvider({ children }) {
   const createTask = useCallback(
     async (taskData) => {
       setError('')
-      let nextTasks = []
+      try {
+        let nextTasks = []
 
-      if (isGuest) {
-        const newTask = { id: createClientId(), isCompleted: false, createdAt: new Date().toISOString(), ...taskData }
-        nextTasks = [newTask, ...getGuestTasks()]
-        setGuestTasks(nextTasks)
-        setTasks(nextTasks)
-      } else {
-        const response = await createTaskRequest(taskData)
-        const createdTask = response?.task ?? response
-        setTasks((currentTasks) => [createdTask, ...currentTasks])
+        if (isGuest) {
+          const newTask = { id: createClientId(), isCompleted: false, createdAt: new Date().toISOString(), ...taskData }
+          nextTasks = [newTask, ...getGuestTasks()]
+          setGuestTasks(nextTasks)
+          setTasks(nextTasks)
+        } else {
+          const response = await createTaskRequest(taskData)
+          const createdTask = response?.task ?? response
+          setTasks((currentTasks) => [createdTask, ...currentTasks])
+        }
+
+        await refreshStats()
+        showSuccess('Task saved.')
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to save task.'
+        setError(message)
+        showError(message)
+        throw requestError
       }
-
-      await refreshStats()
     },
-    [isGuest, refreshStats]
+    [isGuest, refreshStats, showError, showSuccess]
   )
 
   const updateTask = useCallback(
     async (id, taskData) => {
       setError('')
+      try {
+        if (isGuest) {
+          const nextTasks = getGuestTasks().map((task) => (task.id === id ? { ...task, ...taskData } : task))
+          setGuestTasks(nextTasks)
+          setTasks(nextTasks)
+        } else {
+          const response = await updateTaskRequest(id, taskData)
+          const updatedTask = response?.task ?? response
+          setTasks((currentTasks) => currentTasks.map((task) => (task.id === id ? { ...task, ...updatedTask } : task)))
+        }
 
-      if (isGuest) {
-        const nextTasks = getGuestTasks().map((task) => (task.id === id ? { ...task, ...taskData } : task))
-        setGuestTasks(nextTasks)
-        setTasks(nextTasks)
-      } else {
-        const response = await updateTaskRequest(id, taskData)
-        const updatedTask = response?.task ?? response
-        setTasks((currentTasks) => currentTasks.map((task) => (task.id === id ? { ...task, ...updatedTask } : task)))
+        await refreshStats()
+        showSuccess(
+          taskData.isCompleted === true
+            ? 'Task marked complete.'
+            : taskData.isCompleted === false
+              ? 'Task updated.'
+              : 'Task updated.'
+        )
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to update task.'
+        setError(message)
+        showError(message)
+        throw requestError
       }
-
-      await refreshStats()
     },
-    [isGuest, refreshStats]
+    [isGuest, refreshStats, showError, showSuccess]
   )
 
   const deleteTask = useCallback(
     async (id) => {
       setError('')
+      try {
+        if (isGuest) {
+          const nextTasks = getGuestTasks().filter((task) => task.id !== id)
+          setGuestTasks(nextTasks)
+          setTasks(nextTasks)
+        } else {
+          await deleteTaskRequest(id)
+          setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id))
+        }
 
-      if (isGuest) {
-        const nextTasks = getGuestTasks().filter((task) => task.id !== id)
-        setGuestTasks(nextTasks)
-        setTasks(nextTasks)
-      } else {
-        await deleteTaskRequest(id)
-        setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id))
+        await refreshStats()
+        showSuccess('Task deleted.')
+      } catch (requestError) {
+        const message = requestError.response?.data?.message ?? requestError.message ?? 'Unable to delete task.'
+        setError(message)
+        showError(message)
+        throw requestError
       }
-
-      await refreshStats()
     },
-    [isGuest, refreshStats]
+    [isGuest, refreshStats, showError, showSuccess]
   )
 
   const toggleTaskCompletion = useCallback(
     async (task) => {
-      await updateTask(task.id, { isCompleted: !task.isCompleted })
+      await updateTask(task.id, {
+        isCompleted: !task.isCompleted,
+        completedAt: !task.isCompleted ? new Date().toISOString() : null,
+      })
     },
     [updateTask]
   )
