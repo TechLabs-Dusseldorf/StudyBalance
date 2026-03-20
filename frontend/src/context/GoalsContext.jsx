@@ -55,7 +55,7 @@ export function GoalsProvider({ children }) {
 
       if (isAuthenticated) {
         const response = await getGoalsRequest()
-        setGoals(normalizeGoals(response))
+        setGoals(normalizeGoals(response).map((goal) => decorateGoal(goal, [])))
         return
       }
 

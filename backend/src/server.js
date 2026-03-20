@@ -14,6 +14,12 @@ const { makeAuthController } = require('./controllers/authController')
 const { makeAuthRoutes } = require('./routes/authRoutes')
 const { hashPassword, comparePassword } = require('./utils/crypto')
 const { signJwt } = require('./utils/jwt')
+const { makeRequireAuth } = require('./middleware/authenticate')
+
+const Task = require('./model/Task')
+const { makeTaskService } = require('./services/taskService')
+const { makeTaskController } = require('./controllers/taskController')
+const { makeTaskRoutes } = require('./routes/taskRoutes')
 
 /**
  * Create and configure Express application
@@ -69,6 +75,12 @@ const createApp = () => {
 
   // API routes
   app.use(`${config.server.apiPrefix}/auth`, makeAuthRoutes({ authController }))
+
+  const requireAuth = makeRequireAuth({ jwtSecret: config.jwtSecret })
+  const taskService = makeTaskService({ taskModel: Task })
+  const taskController = makeTaskController({ taskService })
+
+  app.use(`${config.server.apiPrefix}/tasks`, makeTaskRoutes({ taskController, requireAuth }))
 
   // 404 handler
   app.use((req, res) => {

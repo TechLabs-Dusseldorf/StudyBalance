@@ -115,7 +115,7 @@ export default defineConfig([
             'functional/no-this-expressions': 'error',
             'functional/no-let': 'warn',
 
-            'functional/immutable-data': ['error', { ignoreAccessorPattern: ['*.current', 'module.exports'] }],
+            'functional/immutable-data': ['error', { ignoreAccessorPattern: ['*.current', 'module.exports', 'req.*'] }],
 
             'functional/prefer-readonly-type': 'off',
             'functional/prefer-immutable-types': 'off',

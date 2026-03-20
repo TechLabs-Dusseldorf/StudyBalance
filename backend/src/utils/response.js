@@ -4,13 +4,42 @@ const successResponse = ({ token, user }) => ({
   user,
 })
 
-const userDto = ({ _id, email, lastLogin }) => ({ 
+const userDto = ({ _id, email, lastLogin, createdAt, updatedAt }) => ({
   id: String(_id),
   email,
-  lastLogin,                                        
+  lastLogin,
+  createdAt,
+  updatedAt,
+})
+
+const taskDto = ({
+  _id,
+  userId,
+  title,
+  description,
+  tags,
+  priority,
+  dueDate,
+  estimatedTime,
+  isCompleted,
+  createdAt,
+  updatedAt,
+}) => ({
+  id: String(_id),
+  userId: String(userId),
+  title,
+  description,
+  tags,
+  priority,
+  dueDate,
+  estimatedTime,
+  isCompleted,
+  createdAt,
+  updatedAt,
 })
 
 module.exports = {
   successResponse,
   userDto,
+  taskDto,
 }
