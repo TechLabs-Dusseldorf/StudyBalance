@@ -64,9 +64,28 @@ const goalDto = ({
   updatedAt,
 })
 
+const sessionDto = ({
+  _id,
+  userId,
+  durationMinutes,
+  sessionType,
+  taskId,
+  createdAt,
+  updatedAt,
+}) => ({
+  id: String(_id),
+  userId: String(userId),
+  durationMinutes,
+  sessionType,
+  taskId: taskId ? String(taskId) : undefined,
+  createdAt,
+  updatedAt,
+})
+
 module.exports = {
   successResponse,
   userDto,
   taskDto,
   goalDto,
+  sessionDto,
 }

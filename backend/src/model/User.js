@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    totalStudyTime: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 )

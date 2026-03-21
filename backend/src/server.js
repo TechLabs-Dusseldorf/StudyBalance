@@ -26,6 +26,15 @@ const { makeGoalService } = require('./services/goalService')
 const { makeGoalController } = require('./controllers/goalController')
 const { makeGoalRoutes } = require('./routes/goalRoutes')
 
+const Session = require('./model/Session')
+const { makeSessionService } = require('./services/sessionService')
+const { makeSessionController } = require('./controllers/sessionController')
+const { makeSessionRoutes } = require('./routes/sessionRoutes')
+
+const { makeStatsService } = require('./services/statsService')
+const { makeStatsController } = require('./controllers/statsController')
+const { makeStatsRoutes } = require('./routes/statsRoutes')
+
 /**
  * Create and configure Express application
  * @returns {express.Application}
@@ -90,6 +99,14 @@ const createApp = () => {
   const goalService = makeGoalService({ goalModel: Goal })
   const goalController = makeGoalController({ goalService })
   app.use(`${config.server.apiPrefix}/goals`, makeGoalRoutes({ goalController, requireAuth }))
+
+  const sessionService = makeSessionService({ sessionModel: Session, userModel: User })
+  const sessionController = makeSessionController({ sessionService })
+  app.use(`${config.server.apiPrefix}/sessions`, makeSessionRoutes({ sessionController, requireAuth }))
+
+  const statsService = makeStatsService({ userModel: User, sessionModel: Session })
+  const statsController = makeStatsController({ statsService })
+  app.use(`${config.server.apiPrefix}/stats`, makeStatsRoutes({ statsController, requireAuth }))
 
   // 404 handler
   app.use((req, res) => {
