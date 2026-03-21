@@ -38,8 +38,35 @@ const taskDto = ({
   updatedAt,
 })
 
+const goalDto = ({
+  _id,
+  userId,
+  title,
+  description,
+  targetDate,
+  targetHours,
+  progressHours,
+  category,
+  isCompleted,
+  createdAt,
+  updatedAt,
+}) => ({
+  id: String(_id),
+  userId: String(userId),
+  title,
+  description,
+  targetDate,
+  targetHours,
+  progressHours,
+  category,
+  isCompleted,
+  createdAt,
+  updatedAt,
+})
+
 module.exports = {
   successResponse,
   userDto,
   taskDto,
+  goalDto,
 }

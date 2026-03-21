@@ -1,4 +1,4 @@
-const { badRequest, internal } = require('../utils/httpErrors')
+const { badRequest, internal, notFound } = require('../utils/httpErrors')
 const { taskDto } = require('../utils/response')
 
 const escapeRegex = (value) =>
@@ -111,11 +111,90 @@ const makeTaskService = ({ taskModel }) => {
     return { tasks: dtoTasks, count: dtoTasks.length }
   }
 
+  const getTaskById = async ({ userId, taskId }) => {
+    try {
+      const task = await taskModel.findById(taskId).lean()
+      
+      if (!task) {
+        throw notFound('Task not found')
+      }
+      
+      // Security check: make sure the task belongs to this user
+      if (String(task.userId) !== String(userId)) {
+        throw notFound('Task not found')
+      }
+      
+      return taskDto(task)
+    } catch (err) {
+      if (err.statusCode) throw err  // Re-throw our custom errors
+      throw internal('Failed to get task')
+    }
+  }
+
+  const updateTask = async ({ userId, taskId, input }) => {
+    try {
+      // First check if task exists and belongs to user
+      const existingTask = await taskModel.findById(taskId)
+      
+      if (!existingTask) {
+        throw notFound('Task not found')
+      }
+      
+      if (String(existingTask.userId) !== String(userId)) {
+        throw notFound('Task not found')
+      }
+
+      // Build update object with only provided fields
+      const updates = {}
+      if (input.title !== undefined) updates.title = input.title
+      if (input.description !== undefined) updates.description = input.description
+      if (input.tags !== undefined) updates.tags = input.tags
+      if (input.priority !== undefined) updates.priority = input.priority
+      if (input.dueDate !== undefined) updates.dueDate = input.dueDate
+      if (input.estimatedTime !== undefined) updates.estimatedTime = input.estimatedTime
+      if (input.isCompleted !== undefined) updates.isCompleted = input.isCompleted
+
+      // Update and return the task
+      const updated = await taskModel.findByIdAndUpdate(
+        taskId,
+        updates,
+        { new: true, runValidators: true }
+      ).lean()
+
+      return taskDto(updated)
+    } catch (err) {
+      if (err.statusCode) throw err
+      throw internal('Failed to update task')
+    }
+  }
+
+  const deleteTask = async ({ userId, taskId }) => {
+    try {
+      const task = await taskModel.findById(taskId)
+      
+      if (!task) {
+        throw notFound('Task not found')
+      }
+      
+      // Security check: make sure the task belongs to this user
+      if (String(task.userId) !== String(userId)) {
+        throw notFound('Task not found')
+      }
+
+      await taskModel.findByIdAndDelete(taskId)
+    } catch (err) {
+      if (err.statusCode) throw err
+      throw internal('Failed to delete task')
+    }
+  }
+
   return {
     createTask,
     listTasks,
+    getTaskById,
+    updateTask,
+    deleteTask,
   }
 }
 
 module.exports = { makeTaskService }
-

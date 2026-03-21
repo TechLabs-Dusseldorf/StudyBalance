@@ -21,6 +21,11 @@ const { makeTaskService } = require('./services/taskService')
 const { makeTaskController } = require('./controllers/taskController')
 const { makeTaskRoutes } = require('./routes/taskRoutes')
 
+const Goal = require('./model/Goal')
+const { makeGoalService } = require('./services/goalService')
+const { makeGoalController } = require('./controllers/goalController')
+const { makeGoalRoutes } = require('./routes/goalRoutes')
+
 /**
  * Create and configure Express application
  * @returns {express.Application}
@@ -77,10 +82,14 @@ const createApp = () => {
   app.use(`${config.server.apiPrefix}/auth`, makeAuthRoutes({ authController }))
 
   const requireAuth = makeRequireAuth({ jwtSecret: config.jwtSecret })
+  
   const taskService = makeTaskService({ taskModel: Task })
   const taskController = makeTaskController({ taskService })
-
   app.use(`${config.server.apiPrefix}/tasks`, makeTaskRoutes({ taskController, requireAuth }))
+
+  const goalService = makeGoalService({ goalModel: Goal })
+  const goalController = makeGoalController({ goalService })
+  app.use(`${config.server.apiPrefix}/goals`, makeGoalRoutes({ goalController, requireAuth }))
 
   // 404 handler
   app.use((req, res) => {
