@@ -19,8 +19,40 @@ const makeTaskController = ({ taskService }) => {
     }
   }
 
-  return { createTask, listTasks }
+  const getTaskById = async (req, res, next) => {
+    try {
+      const userId = req.user.id
+      const taskId = req.params.id
+      const task = await taskService.getTaskById({ userId, taskId })
+      res.status(200).json({ success: true, task })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  const updateTask = async (req, res, next) => {
+    try {
+      const userId = req.user.id
+      const taskId = req.params.id
+      const task = await taskService.updateTask({ userId, taskId, input: req.validatedBody })
+      res.status(200).json({ success: true, task })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  const deleteTask = async (req, res, next) => {
+    try {
+      const userId = req.user.id
+      const taskId = req.params.id
+      await taskService.deleteTask({ userId, taskId })
+      res.status(200).json({ success: true, message: 'Task deleted successfully' })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  return { createTask, listTasks, getTaskById, updateTask, deleteTask }
 }
 
 module.exports = { makeTaskController }
-

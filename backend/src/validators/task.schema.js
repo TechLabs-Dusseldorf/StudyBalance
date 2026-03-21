@@ -10,5 +10,14 @@ const createTaskSchema = z.object({
   isCompleted: z.boolean().optional(),
 })
 
-module.exports = { createTaskSchema }
+const updateTaskSchema = z.object({
+  title: z.string().min(1, 'Title is required').trim().optional(),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  priority: z.string().optional(),
+  dueDate: z.coerce.date().optional(),
+  estimatedTime: z.coerce.number().int().positive().optional(),
+  isCompleted: z.boolean().optional(),
+})
 
+module.exports = { createTaskSchema, updateTaskSchema }
