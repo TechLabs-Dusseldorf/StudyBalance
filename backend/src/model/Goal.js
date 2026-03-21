@@ -22,6 +22,19 @@ const goalSchema = new mongoose.Schema(
       type: Date,
       default: undefined,
     },
+    targetHours: {
+      type: Number,
+      default: undefined,
+    },
+    progressHours: {
+      type: Number,
+      default: 0,
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
     isCompleted: {
       type: Boolean,
       default: false,
