@@ -82,8 +82,17 @@ export const deleteGoal = async (id) => {
 }
 
 export const getStats = async () => {
-  const response = await api.get('/api/stats')
-  return response.data
+  const { data } = await api.get('/api/stats')
+  const { stats } = data ?? {}
+  if (stats != null && typeof stats === 'object') {
+    return {
+      ...stats,
+      completedTasksCount: stats.completedTasksCount ?? stats.completedTasks,
+      activeTasksCount: stats.activeTasksCount ?? stats.activeTasks,
+      activeGoalsCount: stats.activeGoalsCount ?? stats.activeGoals,
+    }
+  }
+  return data
 }
 
 export const createSession = async (sessionData) => {
