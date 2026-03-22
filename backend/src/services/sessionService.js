@@ -1,25 +1,35 @@
 const { internal } = require('../utils/httpErrors')
 const { sessionDto } = require('../utils/response')
 
-const makeSessionService = ({ sessionModel, userModel }) => {
+const makeSessionService = ({ sessionModel, userModel, goalModel }) => {
   const logSession = async ({ userId, input }) => {
-    const { durationMinutes, sessionType, taskId } = input
+    const { duration, type, completedAt, taskId, goalId } = input
 
     try {
       // Create the session
       const session = await sessionModel.create({
         userId,
-        durationMinutes,
-        sessionType,
+        duration,
+        type,
+        completedAt,
         ...(taskId && { taskId }),
+        ...(goalId && { goalId }),
       })
 
       // Update user's total study time (only for focus sessions)
-      if (sessionType === 'focus') {
+      if (type === 'focus') {
         await userModel.findByIdAndUpdate(
           userId,
-          { $inc: { totalStudyTime: durationMinutes } }
+          { $inc: { totalStudyTime: duration } }
         )
+
+        // Update goal progress if goalId is provided
+        if (goalId) {
+          await goalModel.findByIdAndUpdate(
+            goalId,
+            { $inc: { progressHours: duration / 60 } }
+          )
+        }
       }
 
       return sessionDto(session.toObject())

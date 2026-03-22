@@ -2,7 +2,7 @@ const makeStatsController = ({ statsService }) => {
   const getStats = async (req, res, next) => {
     try {
       const userId = req.user.id
-      const stats = await statsService.getUserStats({ userId })
+      const stats = await statsService.getUserStats({ userId, query: req.query })
       res.status(200).json({ success: true, stats })
     } catch (err) {
       next(err)

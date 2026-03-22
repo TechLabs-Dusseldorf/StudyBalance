@@ -8,19 +8,28 @@ const sessionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    durationMinutes: {
+    duration: {
       type: Number,
       required: true,
       min: 1,
     },
-    sessionType: {
+    type: {
       type: String,
       enum: ['focus', 'break'],
       default: 'focus',
     },
+    completedAt: {
+      type: Date,
+      required: true,
+    },
     taskId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Task',
+      default: undefined,
+    },
+    goalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Goal',
       default: undefined,
     },
   },
