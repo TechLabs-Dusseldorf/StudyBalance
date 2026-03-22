@@ -100,11 +100,11 @@ const createApp = () => {
   const goalController = makeGoalController({ goalService })
   app.use(`${config.server.apiPrefix}/goals`, makeGoalRoutes({ goalController, requireAuth }))
 
-  const sessionService = makeSessionService({ sessionModel: Session, userModel: User })
+  const sessionService = makeSessionService({ sessionModel: Session, userModel: User, goalModel: Goal })
   const sessionController = makeSessionController({ sessionService })
   app.use(`${config.server.apiPrefix}/sessions`, makeSessionRoutes({ sessionController, requireAuth }))
 
-  const statsService = makeStatsService({ userModel: User, sessionModel: Session })
+  const statsService = makeStatsService({ userModel: User, sessionModel: Session, taskModel: Task, goalModel: Goal })
   const statsController = makeStatsController({ statsService })
   app.use(`${config.server.apiPrefix}/stats`, makeStatsRoutes({ statsController, requireAuth }))
 
